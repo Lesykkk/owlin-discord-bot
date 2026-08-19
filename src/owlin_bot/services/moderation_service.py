@@ -5,7 +5,6 @@ from __future__ import annotations
 import logging
 from typing import Protocol
 
-from owlin_bot.constants import MODERATION_REASON
 from owlin_bot.models.moderation import ActionResult, MessageEvent
 from owlin_bot.settings import Settings
 
@@ -14,6 +13,10 @@ logger = logging.getLogger(__name__)
 
 class ModerationActions(Protocol):
     """Discord operations required by ModerationService."""
+
+    async def delete_message(self, channel_id: int, message_id: int) -> ActionResult:
+        """Delete one message from a Discord channel."""
+        raise NotImplementedError
 
     async def ban_member(
         self,
@@ -39,7 +42,7 @@ class ModerationService:
         await self._handle_restricted_channel_spam(event)
 
     async def _handle_restricted_channel_spam(self, event: MessageEvent) -> None:
-        """Detect spam in the restricted channel and ban its author."""
+        """Detect spam in the restricted channel and delete its message."""
         skip_reason = self._get_spam_skip_reason(event)
         if skip_reason is not None:
             if skip_reason == "protected_member":
@@ -54,23 +57,22 @@ class ModerationService:
         if guild_id is None:
             raise RuntimeError("Moderation event must belong to a guild")
 
-        ban_result = await self._actions.ban_member(
-            guild_id,
-            event.author_id,
-            reason=MODERATION_REASON,
-            delete_message_seconds=self._settings.cleanup_window_seconds,
+        delete_result = await self._actions.delete_message(
+            event.channel_id,
+            event.message_id,
         )
-        if not ban_result.succeeded:
+        if not delete_result.succeeded:
             logger.error(
-                "Failed to ban spam author %s in guild %s: %s",
-                event.author_id,
+                "Failed to delete spam message %s in guild %s: %s",
+                event.message_id,
                 guild_id,
-                ban_result.error,
+                delete_result.error,
             )
             return
 
         logger.info(
-            "Restricted-channel spam moderation applied to member %s in guild %s",
+            "Restricted-channel spam message %s from member %s was deleted in guild %s",
+            event.message_id,
             event.author_id,
             guild_id,
         )

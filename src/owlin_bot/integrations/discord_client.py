@@ -13,6 +13,28 @@ class DiscordClient:
     def __init__(self, bot: discord.Client) -> None:
         self._bot = bot
 
+    async def delete_message(self, channel_id: int, message_id: int) -> ActionResult:
+        """Delete one message from a Discord text channel or thread."""
+        try:
+            channel = self._bot.get_channel(channel_id)
+            if channel is None:
+                channel = await self._bot.fetch_channel(channel_id)
+
+            if not isinstance(channel, (discord.TextChannel, discord.Thread)):
+                return ActionResult(
+                    succeeded=False,
+                    error=f"Channel {channel_id} cannot contain messages",
+                )
+
+            message = await channel.fetch_message(message_id)
+            await message.delete()
+        except discord.DiscordException as exc:
+            return ActionResult(
+                succeeded=False,
+                error=f"{type(exc).__name__}: {exc}",
+            )
+        return ActionResult(succeeded=True)
+
     async def ban_member(
         self,
         guild_id: int,

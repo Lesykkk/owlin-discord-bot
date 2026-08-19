@@ -20,6 +20,7 @@ class ModerationHandler:
         guild = message.guild
 
         event = MessageEvent(
+            message_id=message.id,
             guild_id=guild.id if guild else None,
             channel_id=message.channel.id,
             author_id=message.author.id,

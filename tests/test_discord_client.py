@@ -1,12 +1,27 @@
 from __future__ import annotations
 
 from types import SimpleNamespace
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, MagicMock
 
 import discord
 import pytest
 
 from owlin_bot.integrations.discord_client import DiscordClient
+
+
+@pytest.mark.asyncio
+async def test_delete_message_uses_cached_channel():
+    message = SimpleNamespace(delete=AsyncMock())
+    channel = MagicMock(spec=discord.TextChannel)
+    channel.fetch_message = AsyncMock(return_value=message)
+    bot = SimpleNamespace(get_channel=lambda channel_id: channel, fetch_channel=AsyncMock())
+
+    result = await DiscordClient(bot).delete_message(42, 99)
+
+    assert result.succeeded is True
+    channel.fetch_message.assert_awaited_once_with(99)
+    message.delete.assert_awaited_once_with()
+    bot.fetch_channel.assert_not_awaited()
 
 
 @pytest.mark.asyncio

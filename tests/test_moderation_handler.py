@@ -27,6 +27,7 @@ class FakeChannel:
 
 @dataclass
 class FakeMessage:
+    id: int
     author: FakeAuthor
     guild: FakeGuild | None
     channel: FakeChannel
@@ -49,6 +50,7 @@ async def test_handler_maps_discord_message_to_service_event():
 
     await handler.handle_message(
         FakeMessage(
+            id=123,
             author=FakeAuthor(id=99),
             guild=FakeGuild(id=42, owner_id=100),
             channel=FakeChannel(id=7),

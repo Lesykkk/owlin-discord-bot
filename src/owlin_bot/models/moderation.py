@@ -10,6 +10,7 @@ from datetime import datetime
 class MessageEvent:
     """Facts extracted from a Discord message."""
 
+    message_id: int
     guild_id: int | None
     channel_id: int
     author_id: int

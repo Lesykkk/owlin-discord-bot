@@ -1,11 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 
 import pytest
 
-from owlin_bot.constants import MODERATION_REASON
 from owlin_bot.models.moderation import ActionResult, MessageEvent
 from owlin_bot.services.moderation_service import ModerationService
 from owlin_bot.settings import Settings
@@ -13,8 +12,16 @@ from owlin_bot.settings import Settings
 
 @dataclass
 class FakeModerationActions:
+    delete_result: ActionResult = field(default_factory=lambda: ActionResult(succeeded=True))
     ban_result: ActionResult = field(default_factory=lambda: ActionResult(succeeded=True))
+    delete_calls: list[dict[str, object]] = field(default_factory=list)
     ban_calls: list[dict[str, object]] = field(default_factory=list)
+
+    async def delete_message(self, channel_id, message_id):
+        self.delete_calls.append(
+            {"channel_id": channel_id, "message_id": message_id}
+        )
+        return self.delete_result
 
     async def ban_member(self, guild_id, member_id, *, reason, delete_message_seconds):
         self.ban_calls.append(
@@ -41,6 +48,7 @@ def make_settings(**overrides) -> Settings:
 
 def make_event(**overrides) -> MessageEvent:
     values = {
+        "message_id": 123,
         "guild_id": 42,
         "channel_id": 7,
         "author_id": 99,
@@ -54,19 +62,13 @@ def make_event(**overrides) -> MessageEvent:
 
 
 @pytest.mark.asyncio
-async def test_trigger_bans_member_and_deletes_last_five_minutes():
+async def test_trigger_deletes_triggering_message():
     actions = FakeModerationActions()
 
     await ModerationService(make_settings(), actions).handle_message(make_event())
 
-    assert actions.ban_calls == [
-        {
-            "guild_id": 42,
-            "member_id": 99,
-            "reason": MODERATION_REASON,
-            "delete_message_seconds": 300,
-        }
-    ]
+    assert actions.delete_calls == [{"channel_id": 7, "message_id": 123}]
+    assert actions.ban_calls == []
 
 
 @pytest.mark.parametrize(
@@ -87,6 +89,7 @@ async def test_ignored_messages_do_not_trigger_actions(event_overrides, reason):
         make_event(**event_overrides)
     )
 
+    assert actions.delete_calls == []
     assert actions.ban_calls == []
 
 
@@ -98,29 +101,26 @@ async def test_protected_member_can_be_moderated_when_protection_is_disabled():
         make_settings(protect_administrators=False), actions
     ).handle_message(make_event(author_is_administrator=True))
 
-    assert len(actions.ban_calls) == 1
+    assert len(actions.delete_calls) == 1
 
 
 @pytest.mark.asyncio
-async def test_ban_error_is_reported():
+async def test_delete_error_is_reported():
     actions = FakeModerationActions(
-        ban_result=ActionResult(succeeded=False, error="ban failed"),
+        delete_result=ActionResult(succeeded=False, error="delete failed"),
     )
 
     await ModerationService(make_settings(), actions).handle_message(make_event())
-    assert len(actions.ban_calls) == 1
+    assert len(actions.delete_calls) == 1
 
 
 @pytest.mark.asyncio
 async def test_unexpected_action_error_is_not_hidden():
     class BrokenActions(FakeModerationActions):
-        async def ban_member(
+        async def delete_message(
             self,
-            guild_id,
-            member_id,
-            *,
-            reason,
-            delete_message_seconds,
+            channel_id,
+            message_id,
         ):
             raise RuntimeError("programming error")
 
