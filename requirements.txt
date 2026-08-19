@@ -1,0 +1,10 @@
+discord.py>=2.6,<3
+python-dotenv>=1.1,<2
+
+# Development tooling
+pyright>=1.1,<2
+mypy>=1.13,<2
+pylint>=3.3,<4
+ruff>=0.9,<1
+pytest-cov>=6,<7
+pytest-asyncio>=1.1,<2

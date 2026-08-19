@@ -1,0 +1,115 @@
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+include = ["src/**/*.py"]
+exclude = [
+    "**/__pycache__",
+    "**/.venv",
+    "build",
+    "dist",
+]
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "N", "UP", "B", "C4", "SIM", "C901"]
+ignore = ["E501"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 15
+
+[tool.ruff.lint.isort]
+known-first-party = ["owlin_bot"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[tool.pyright]
+include = ["src"]
+exclude = [
+    "**/__pycache__",
+    "**/.venv",
+    "build",
+    "dist",
+]
+venvPath = "."
+venv = ".venv"
+pythonVersion = "3.13"
+typeCheckingMode = "standard"
+reportMissingImports = "error"
+reportMissingTypeStubs = "none"
+reportUnusedImport = "warning"
+reportUnusedClass = "warning"
+reportUnusedFunction = "warning"
+reportUnusedVariable = "warning"
+extraPaths = ["src"]
+
+[[tool.pyright.executionEnvironments]]
+root = "src"
+extraPaths = ["src"]
+
+[tool.mypy]
+python_version = "3.13"
+mypy_path = "src"
+files = ["src"]
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+check_untyped_defs = true
+disallow_untyped_defs = true
+no_implicit_optional = true
+ignore_missing_imports = false
+exclude = '''(?x)(^\.venv/|^build/|^dist/)'''
+
+[[tool.mypy.overrides]]
+module = ["discord", "discord.*", "dotenv", "dotenv.*"]
+ignore_missing_imports = true
+
+[tool.pylint.main]
+py-version = "3.13"
+source-roots = ["src"]
+ignore = [".venv", "build", "dist"]
+fail-under = 8.0
+persistent = false
+
+[tool.pylint.basic]
+good-names = ["i", "j", "k", "ex", "_"]
+
+[tool.pylint.format]
+max-line-length = 100
+
+[tool.pylint.messages_control]
+disable = [
+    "duplicate-code",
+    "fixme",
+    "too-few-public-methods",
+]
+
+[tool.pylint.design]
+max-args = 7
+max-attributes = 10
+max-locals = 20
+max-positional-arguments = 7
+
+[tool.pylint.reports]
+reports = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+asyncio_mode = "auto"
+
+[tool.coverage.run]
+branch = true
+source = ["src/owlin_bot"]
+omit = [
+    "*/__main__.py",
+    "*/main.py",
+    "*/bot.py",
+    "*/__init__.py",
+]
+
+[tool.coverage.report]
+fail_under = 85
+show_missing = true

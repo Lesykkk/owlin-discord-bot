@@ -1,0 +1,27 @@
+"""Data models used by moderation handlers and services."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from datetime import datetime
+
+
+@dataclass(frozen=True, slots=True)
+class MessageEvent:
+    """Facts extracted from a Discord message."""
+
+    guild_id: int | None
+    channel_id: int
+    author_id: int
+    author_is_bot: bool
+    author_is_server_owner: bool
+    author_is_administrator: bool
+    created_at: datetime
+
+
+@dataclass(frozen=True, slots=True)
+class ActionResult:
+    """Result of an external operation."""
+
+    succeeded: bool
+    error: str | None = None
