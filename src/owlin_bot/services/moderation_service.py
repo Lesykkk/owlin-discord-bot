@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 from typing import Protocol
 
+from owlin_bot.constants import MODERATION_REASON
 from owlin_bot.models.moderation import ActionResult, MessageEvent
 from owlin_bot.settings import Settings
 
@@ -42,7 +43,7 @@ class ModerationService:
         await self._handle_restricted_channel_spam(event)
 
     async def _handle_restricted_channel_spam(self, event: MessageEvent) -> None:
-        """Detect spam in the restricted channel and delete its message."""
+        """Detect spam in the restricted channel and ban its author."""
         skip_reason = self._get_spam_skip_reason(event)
         if skip_reason is not None:
             if skip_reason == "protected_member":
@@ -57,22 +58,23 @@ class ModerationService:
         if guild_id is None:
             raise RuntimeError("Moderation event must belong to a guild")
 
-        delete_result = await self._actions.delete_message(
-            event.channel_id,
-            event.message_id,
+        ban_result = await self._actions.ban_member(
+            guild_id,
+            event.author_id,
+            reason=MODERATION_REASON,
+            delete_message_seconds=self._settings.cleanup_window_seconds,
         )
-        if not delete_result.succeeded:
+        if not ban_result.succeeded:
             logger.error(
-                "Failed to delete spam message %s in guild %s: %s",
-                event.message_id,
+                "Failed to ban spam author %s in guild %s: %s",
+                event.author_id,
                 guild_id,
-                delete_result.error,
+                ban_result.error,
             )
             return
 
         logger.info(
-            "Restricted-channel spam message %s from member %s was deleted in guild %s",
-            event.message_id,
+            "Restricted-channel spam author %s was banned in guild %s",
             event.author_id,
             guild_id,
         )

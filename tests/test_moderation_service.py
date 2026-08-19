@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 
 import pytest
 
+from owlin_bot.constants import MODERATION_REASON
 from owlin_bot.models.moderation import ActionResult, MessageEvent
 from owlin_bot.services.moderation_service import ModerationService
 from owlin_bot.settings import Settings
@@ -62,13 +63,20 @@ def make_event(**overrides) -> MessageEvent:
 
 
 @pytest.mark.asyncio
-async def test_trigger_deletes_triggering_message():
+async def test_trigger_bans_author_and_deletes_recent_messages():
     actions = FakeModerationActions()
 
     await ModerationService(make_settings(), actions).handle_message(make_event())
 
-    assert actions.delete_calls == [{"channel_id": 7, "message_id": 123}]
-    assert actions.ban_calls == []
+    assert actions.delete_calls == []
+    assert actions.ban_calls == [
+        {
+            "guild_id": 42,
+            "member_id": 99,
+            "reason": MODERATION_REASON,
+            "delete_message_seconds": 300,
+        }
+    ]
 
 
 @pytest.mark.parametrize(
@@ -101,26 +109,29 @@ async def test_protected_member_can_be_moderated_when_protection_is_disabled():
         make_settings(protect_administrators=False), actions
     ).handle_message(make_event(author_is_administrator=True))
 
-    assert len(actions.delete_calls) == 1
+    assert len(actions.ban_calls) == 1
 
 
 @pytest.mark.asyncio
-async def test_delete_error_is_reported():
+async def test_ban_error_is_reported():
     actions = FakeModerationActions(
-        delete_result=ActionResult(succeeded=False, error="delete failed"),
+        ban_result=ActionResult(succeeded=False, error="ban failed"),
     )
 
     await ModerationService(make_settings(), actions).handle_message(make_event())
-    assert len(actions.delete_calls) == 1
+    assert len(actions.ban_calls) == 1
 
 
 @pytest.mark.asyncio
 async def test_unexpected_action_error_is_not_hidden():
     class BrokenActions(FakeModerationActions):
-        async def delete_message(
+        async def ban_member(
             self,
-            channel_id,
-            message_id,
+            guild_id,
+            member_id,
+            *,
+            reason,
+            delete_message_seconds,
         ):
             raise RuntimeError("programming error")
 
