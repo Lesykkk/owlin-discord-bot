@@ -27,7 +27,7 @@ class FakePublishingActions:
 def make_service(actions: FakePublishingActions) -> PublishingService:
     settings = Settings(
         discord_token="test-token",
-        watched_channel_id=7,
+        restricted_channel_id=7,
         publish_command_channel_id=PUBLISH_COMMAND_CHANNEL_ID,
     )
     return PublishingService(settings, actions)

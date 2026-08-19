@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 from owlin_bot.app.constants import (
     CLEANUP_WINDOW_SECONDS,
     PUBLISH_COMMAND_CHANNEL_ID,
-    WATCHED_CHANNEL_ID,
+    RESTRICTED_CHANNEL_ID,
 )
 
 
@@ -23,7 +23,7 @@ class Settings:
     """Runtime settings required by the bot."""
 
     discord_token: str
-    watched_channel_id: int
+    restricted_channel_id: int
     publish_command_channel_id: int = PUBLISH_COMMAND_CHANNEL_ID
     cleanup_window_seconds: int = CLEANUP_WINDOW_SECONDS
 
@@ -35,10 +35,10 @@ class Settings:
         token = os.getenv("DISCORD_TOKEN", "").strip()
         if not token or token == "replace-with-your-discord-bot-token":
             raise SettingsError("DISCORD_TOKEN must contain a real Discord bot token")
-        if WATCHED_CHANNEL_ID <= 0:
-            raise SettingsError("Set WATCHED_CHANNEL_ID in app/constants.py")
+        if RESTRICTED_CHANNEL_ID <= 0:
+            raise SettingsError("Set RESTRICTED_CHANNEL_ID in app/constants.py")
 
         return cls(
             discord_token=token,
-            watched_channel_id=WATCHED_CHANNEL_ID,
+            restricted_channel_id=RESTRICTED_CHANNEL_ID,
         )

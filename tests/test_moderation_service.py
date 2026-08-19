@@ -43,7 +43,7 @@ class FakeModerationActions:
 def make_settings(**overrides) -> Settings:
     values = {
         "discord_token": "test-token",
-        "watched_channel_id": 7,
+        "restricted_channel_id": 7,
         "cleanup_window_seconds": 300,
     }
     values.update(overrides)

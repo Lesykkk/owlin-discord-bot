@@ -50,7 +50,7 @@ class ModerationService:
         if (
             event.guild_id is None
             or event.author_is_bot
-            or event.channel_id != self._settings.watched_channel_id
+            or event.channel_id != self._settings.restricted_channel_id
             or event.author_is_server_owner
             or event.author_is_administrator
         ):

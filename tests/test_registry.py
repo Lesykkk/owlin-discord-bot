@@ -14,7 +14,7 @@ def test_register_registers_message_events_and_commands():
         command=Mock(side_effect=lambda **kwargs: lambda callback: callback),
         event=Mock(side_effect=lambda callback: callback),
     )
-    settings = Settings(discord_token="test-token", watched_channel_id=7)
+    settings = Settings(discord_token="test-token", restricted_channel_id=7)
     discord_client = DiscordClient(SimpleNamespace())
 
     register(bot, settings, discord_client)

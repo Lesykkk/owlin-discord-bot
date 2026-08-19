@@ -1,7 +1,7 @@
 """Application constants that are not secrets."""
 
 # ID of the restricted Discord channel.
-WATCHED_CHANNEL_ID = 1539599263347245086
+RESTRICTED_CHANNEL_ID = 1539599263347245086
 
 # Channel where the !publish command is accepted.
 PUBLISH_COMMAND_CHANNEL_ID = 1539659645529096203
