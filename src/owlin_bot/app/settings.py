@@ -1,4 +1,4 @@
-"""Load secret and non-secret application settings."""
+"""Load secret and application settings."""
 
 from __future__ import annotations
 
@@ -7,9 +7,9 @@ from dataclasses import dataclass
 
 from dotenv import load_dotenv
 
-from owlin_bot.constants import (
+from owlin_bot.app.constants import (
     CLEANUP_WINDOW_SECONDS,
-    PROTECT_ADMINISTRATORS,
+    PUBLISH_COMMAND_CHANNEL_ID,
     WATCHED_CHANNEL_ID,
 )
 
@@ -24,19 +24,19 @@ class Settings:
 
     discord_token: str
     watched_channel_id: int
+    publish_command_channel_id: int = PUBLISH_COMMAND_CHANNEL_ID
     cleanup_window_seconds: int = CLEANUP_WINDOW_SECONDS
-    protect_administrators: bool = PROTECT_ADMINISTRATORS
 
     @classmethod
     def from_environment(cls) -> Settings:
-        """Create settings from the environment and code constants."""
+        """Create settings from the environment and application constants."""
         load_dotenv()
 
         token = os.getenv("DISCORD_TOKEN", "").strip()
         if not token or token == "replace-with-your-discord-bot-token":
             raise SettingsError("DISCORD_TOKEN must contain a real Discord bot token")
         if WATCHED_CHANNEL_ID <= 0:
-            raise SettingsError("Set WATCHED_CHANNEL_ID in src/owlin_bot/constants.py")
+            raise SettingsError("Set WATCHED_CHANNEL_ID in app/constants.py")
 
         return cls(
             discord_token=token,

@@ -1,4 +1,4 @@
-"""Data models used by moderation handlers and services."""
+"""Data models for the moderation module."""
 
 from __future__ import annotations
 
@@ -18,11 +18,3 @@ class MessageEvent:
     author_is_server_owner: bool
     author_is_administrator: bool
     created_at: datetime
-
-
-@dataclass(frozen=True, slots=True)
-class ActionResult:
-    """Result of an external operation."""
-
-    succeeded: bool
-    error: str | None = None

@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 
 import pytest
 
-from owlin_bot.handlers.moderation_handler import ModerationHandler
+from owlin_bot.modules.moderation.events import ModerationEvents
 
 
 @dataclass
@@ -45,10 +45,10 @@ class FakeModerationService:
 @pytest.mark.asyncio
 async def test_handler_maps_discord_message_to_service_event():
     service = FakeModerationService()
-    handler = ModerationHandler(service)
+    events = ModerationEvents(service)
     created_at = datetime(2026, 8, 19, 12, 5, tzinfo=timezone.utc)
 
-    await handler.handle_message(
+    await events.on_message(
         FakeMessage(
             id=123,
             author=FakeAuthor(id=99),

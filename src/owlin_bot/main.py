@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import logging
 
-from owlin_bot.bot import create_bot
-from owlin_bot.settings import Settings
+from owlin_bot.app.bot import create_bot
+from owlin_bot.app.settings import Settings
 
 
 def main() -> None:

@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import pytest
 
-import owlin_bot.settings as settings_module
-from owlin_bot.settings import SettingsError
+import owlin_bot.app.settings as settings_module
+from owlin_bot.app.settings import SettingsError
 
 
 def prepare_environment(monkeypatch, *, token: str | None = "test-token") -> None:

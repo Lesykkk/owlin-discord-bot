@@ -1,0 +1,1 @@
+"""Formatted message publishing module."""

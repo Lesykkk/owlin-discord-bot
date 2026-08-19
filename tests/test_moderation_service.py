@@ -5,24 +5,16 @@ from datetime import datetime, timezone
 
 import pytest
 
-from owlin_bot.constants import MODERATION_REASON
-from owlin_bot.models.moderation import ActionResult, MessageEvent
-from owlin_bot.services.moderation_service import ModerationService
-from owlin_bot.settings import Settings
-
-
+from owlin_bot.modules.moderation.models import MessageEvent
+from owlin_bot.modules.moderation.service import ModerationService
+from owlin_bot.app.constants import MODERATION_REASON
+from owlin_bot.app.settings import Settings
 @dataclass
 class FakeModerationActions:
-    delete_result: ActionResult = field(default_factory=lambda: ActionResult(succeeded=True))
-    ban_result: ActionResult = field(default_factory=lambda: ActionResult(succeeded=True))
-    delete_calls: list[dict[str, object]] = field(default_factory=list)
+    ban_error: Exception | None = None
+    unban_error: Exception | None = None
     ban_calls: list[dict[str, object]] = field(default_factory=list)
-
-    async def delete_message(self, channel_id, message_id):
-        self.delete_calls.append(
-            {"channel_id": channel_id, "message_id": message_id}
-        )
-        return self.delete_result
+    unban_calls: list[dict[str, object]] = field(default_factory=list)
 
     async def ban_member(self, guild_id, member_id, *, reason, delete_message_seconds):
         self.ban_calls.append(
@@ -33,7 +25,19 @@ class FakeModerationActions:
                 "delete_message_seconds": delete_message_seconds,
             }
         )
-        return self.ban_result
+        if self.ban_error is not None:
+            raise self.ban_error
+
+    async def unban_member(self, guild_id, member_id, *, reason):
+        self.unban_calls.append(
+            {
+                "guild_id": guild_id,
+                "member_id": member_id,
+                "reason": reason,
+            }
+        )
+        if self.unban_error is not None:
+            raise self.unban_error
 
 
 def make_settings(**overrides) -> Settings:
@@ -41,7 +45,6 @@ def make_settings(**overrides) -> Settings:
         "discord_token": "test-token",
         "watched_channel_id": 7,
         "cleanup_window_seconds": 300,
-        "protect_administrators": True,
     }
     values.update(overrides)
     return Settings(**values)
@@ -68,13 +71,19 @@ async def test_trigger_bans_author_and_deletes_recent_messages():
 
     await ModerationService(make_settings(), actions).handle_message(make_event())
 
-    assert actions.delete_calls == []
     assert actions.ban_calls == [
         {
             "guild_id": 42,
             "member_id": 99,
             "reason": MODERATION_REASON,
             "delete_message_seconds": 300,
+        }
+    ]
+    assert actions.unban_calls == [
+        {
+            "guild_id": 42,
+            "member_id": 99,
+            "reason": MODERATION_REASON,
         }
     ]
 
@@ -97,29 +106,27 @@ async def test_ignored_messages_do_not_trigger_actions(event_overrides, reason):
         make_event(**event_overrides)
     )
 
-    assert actions.delete_calls == []
     assert actions.ban_calls == []
-
-
-@pytest.mark.asyncio
-async def test_protected_member_can_be_moderated_when_protection_is_disabled():
-    actions = FakeModerationActions()
-
-    await ModerationService(
-        make_settings(protect_administrators=False), actions
-    ).handle_message(make_event(author_is_administrator=True))
-
-    assert len(actions.ban_calls) == 1
+    assert actions.unban_calls == []
 
 
 @pytest.mark.asyncio
 async def test_ban_error_is_reported():
-    actions = FakeModerationActions(
-        ban_result=ActionResult(succeeded=False, error="ban failed"),
-    )
+    actions = FakeModerationActions(ban_error=RuntimeError("ban failed"))
 
-    await ModerationService(make_settings(), actions).handle_message(make_event())
+    with pytest.raises(RuntimeError, match="ban failed"):
+        await ModerationService(make_settings(), actions).handle_message(make_event())
+
+
+@pytest.mark.asyncio
+async def test_unban_error_is_reported_after_successful_ban():
+    actions = FakeModerationActions(unban_error=RuntimeError("unban failed"))
+
+    with pytest.raises(RuntimeError, match="unban failed"):
+        await ModerationService(make_settings(), actions).handle_message(make_event())
+
     assert len(actions.ban_calls) == 1
+    assert len(actions.unban_calls) == 1
 
 
 @pytest.mark.asyncio
