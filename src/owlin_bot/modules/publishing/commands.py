@@ -15,12 +15,16 @@ from owlin_bot.modules.publishing.models import PublishRequest
 from owlin_bot.modules.publishing.service import PublishingService
 
 
-class PublishingCommands:
+class PublishingCommands(commands.Cog):
     """Convert publishing commands into publishing use-case input."""
 
-    def __init__(self, service: PublishingService) -> None:
+    def __init__(self, settings: Settings, service: PublishingService) -> None:
         self._service = service
+        self.publish.add_check(is_in_channel(settings.publish_command_channel_id))
 
+    @commands.command(name="publish")
+    @commands.check(is_guild_context)
+    @commands.check(is_administrator_or_owner)
     async def publish(
         self,
         context: commands.Context[commands.Bot],
@@ -43,18 +47,10 @@ class PublishingCommands:
         )
 
 
-def register(
+async def register(
     bot: commands.Bot,
     settings: Settings,
     service: PublishingService,
 ) -> None:
     """Register publishing commands and their authorization rules."""
-    publishing_commands = PublishingCommands(service)
-    bot.command(
-        name="publish",
-        checks=[
-            is_guild_context,
-            is_administrator_or_owner,
-            is_in_channel(settings.publish_command_channel_id),
-        ],
-    )(publishing_commands.publish)
+    await bot.add_cog(PublishingCommands(settings, service))

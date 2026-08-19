@@ -11,17 +11,27 @@ from owlin_bot.app.settings import Settings
 from owlin_bot.integrations.discord_client import DiscordClient
 
 
-def create_bot(settings: Settings) -> commands.Bot:
-    """Create the single Discord bot and register all modules."""
-    intents = discord.Intents.default()
-    intents.guilds = True
-    intents.messages = True
-    intents.message_content = True
+class OwlinBot(commands.Bot):
+    """Discord bot that registers modules during startup."""
 
-    bot = commands.Bot(
-        command_prefix=COMMAND_PREFIX,
-        intents=intents,
-        help_command=None,
-    )
-    register(bot, settings, DiscordClient(bot))
-    return bot
+    def __init__(self, settings: Settings) -> None:
+        intents = discord.Intents.default()
+        intents.guilds = True
+        intents.messages = True
+        intents.message_content = True
+
+        super().__init__(
+            command_prefix=COMMAND_PREFIX,
+            intents=intents,
+            help_command=None,
+        )
+        self._settings = settings
+
+    async def setup_hook(self) -> None:
+        """Register modules before connecting to Discord."""
+        await register(self, self._settings, DiscordClient(self))
+
+
+def create_bot(settings: Settings) -> commands.Bot:
+    """Create the single Discord bot."""
+    return OwlinBot(settings)

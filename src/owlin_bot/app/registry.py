@@ -19,7 +19,7 @@ from owlin_bot.modules.publishing.service import PublishingService
 logger = logging.getLogger(__name__)
 
 
-def register(
+async def register(
     bot: commands.Bot,
     settings: Settings,
     discord_client: DiscordClient,
@@ -30,7 +30,7 @@ def register(
         bot,
         ModerationService(settings, discord_client),
     )
-    register_publishing_commands(
+    await register_publishing_commands(
         bot,
         settings,
         PublishingService(settings, discord_client),
