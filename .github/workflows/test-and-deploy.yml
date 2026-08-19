@@ -68,7 +68,7 @@ jobs:
           cd "$HOME/owlin-discord-bot"
           git fetch origin main
           git checkout main
-          git pull --ff-only origin main
+          git reset --hard origin/main
 
           make install
           sudo systemctl restart owlin-discord-bot
