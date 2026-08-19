@@ -18,4 +18,4 @@ check:
 	PYTHONPATH=src $(PYTHON) -m pytest -q --cov=owlin_bot --cov-report=term-missing
 
 run:
-	PYTHONPATH=src $(PYTHON) -m owlin_bot
+	PYTHONPATH=src $(PYTHON) -m owlin_bot.main
