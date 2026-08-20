@@ -17,8 +17,23 @@ class FakeDiscordClient:
         self.messages.append((channel_id, content))
 
 
-def make_context(channel_id: int = 42):
-    return SimpleNamespace(channel=SimpleNamespace(id=channel_id))
+def make_context(
+    channel_id: int = 42,
+    *,
+    command_name: str | None = "publish",
+    invoked_with: str = "publish",
+) -> SimpleNamespace:
+    return SimpleNamespace(
+        channel=SimpleNamespace(id=channel_id),
+        command=(
+            SimpleNamespace(qualified_name=command_name)
+            if command_name is not None
+            else None
+        ),
+        invoked_with=invoked_with,
+        author=SimpleNamespace(id=99),
+        guild=SimpleNamespace(id=42),
+    )
 
 
 @pytest.mark.parametrize(
@@ -68,13 +83,17 @@ async def test_wrapped_request_error_is_sent_to_user():
 
 
 @pytest.mark.asyncio
-async def test_command_not_found_is_ignored():
+async def test_command_not_found_is_logged_without_response(caplog):
     discord_client = FakeDiscordClient()
     handler = ErrorHandler(discord_client)
 
-    await handler.handle_command_error(make_context(), commands.CommandNotFound())
+    await handler.handle_command_error(
+        make_context(command_name=None, invoked_with="missing"),
+        commands.CommandNotFound(),
+    )
 
     assert discord_client.messages == []
+    assert "Command error: command=missing user=99 guild=42" in caplog.text
 
 
 @pytest.mark.asyncio
@@ -86,7 +105,7 @@ async def test_unexpected_command_error_is_logged_without_response(caplog):
     await handler.handle_command_error(make_context(), error)
 
     assert discord_client.messages == []
-    assert "Unhandled command error: broken" in caplog.text
+    assert "Command error: command=publish user=99 guild=42 error=broken" in caplog.text
 
 
 @pytest.mark.asyncio
@@ -100,4 +119,4 @@ async def test_event_error_is_logged_without_response(caplog):
         await handler.handle_event_error("on_message")
 
     assert discord_client.messages == []
-    assert "Unhandled Discord event: on_message" in caplog.text
+    assert "Event error: event=on_message error=broken event" in caplog.text
