@@ -58,5 +58,9 @@ def _register_event_error_handler(
 
 
 async def _handle_ready(bot: commands.Bot) -> None:
-    """Log successful Discord connection."""
-    logger.info("Logged in as %s (%s)", bot.user, bot.user.id if bot.user else "unknown")
+    """Log a successful Discord connection."""
+    logger.info(
+        "Ready: user=%s id=%s",
+        bot.user,
+        bot.user.id if bot.user else "unknown",
+    )

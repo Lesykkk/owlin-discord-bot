@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Protocol
 
 from owlin_bot.app.constants import MODERATION_REASON
 from owlin_bot.app.settings import Settings
 from owlin_bot.modules.moderation.models import MessageEvent
+
+logger = logging.getLogger(__name__)
 
 
 class ModerationActions(Protocol):
@@ -66,4 +69,10 @@ class ModerationService:
             event.guild_id,
             event.author_id,
             reason=MODERATION_REASON,
+        )
+        logger.info(
+            "Moderation: action=ban_unban guild=%s user=%s channel=%s",
+            event.guild_id,
+            event.author_id,
+            event.channel_id,
         )

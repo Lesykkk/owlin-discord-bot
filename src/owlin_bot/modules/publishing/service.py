@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Protocol
 
 from owlin_bot.app.constants import PUBLISH_EMBED_COLOR
 from owlin_bot.app.settings import Settings
 from owlin_bot.modules.publishing.models import PublishRequest
 from owlin_bot.shared.errors import RequestError
+
+logger = logging.getLogger(__name__)
 
 
 class PublishingActions(Protocol):
@@ -38,6 +41,11 @@ class PublishingService:
             request.target_channel_id,
             request.content,
             color=PUBLISH_EMBED_COLOR,
+        )
+        logger.info(
+            "Publish: source_channel=%s target_channel=%s",
+            request.source_channel_id,
+            request.target_channel_id,
         )
 
     def _validate(self, request: PublishRequest) -> None:

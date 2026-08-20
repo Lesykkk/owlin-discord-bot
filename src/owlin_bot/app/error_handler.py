@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import sys
 
 from discord.ext import commands
 
@@ -13,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 class ErrorHandler:
-    """Send expected command errors and log all unexpected failures."""
+    """Send expected errors and log unexpected failures."""
 
     def __init__(self, discord_client: DiscordClient) -> None:
         self._discord_client = discord_client
@@ -25,27 +26,38 @@ class ErrorHandler:
     ) -> None:
         """Handle errors raised while processing a command."""
         if isinstance(error, commands.CommandNotFound):
+            self._log_command_error(context, error)
             return
 
         original_error = self._unwrap_command_error(error)
+        self._log_command_error(context, original_error)
         message = self._get_user_message(original_error)
         if message is not None:
             await self._discord_client.send_message(context.channel.id, message)
-            return
 
+    async def handle_event_error(self, _event_name: str) -> None:
+        """Log an unexpected Discord event error."""
         logger.error(
-            "Unhandled command error: %s",
-            original_error,
-            exc_info=(
-                type(original_error),
-                original_error,
-                original_error.__traceback__,
-            ),
+            "Event error: event=%s error=%s",
+            _event_name,
+            sys.exc_info()[1],
         )
 
-    async def handle_event_error(self, event_name: str) -> None:
-        """Log an unhandled Discord event error."""
-        logger.exception("Unhandled Discord event: %s", event_name)
+    @staticmethod
+    def _log_command_error(
+        context: commands.Context[commands.Bot],
+        error: Exception,
+    ) -> None:
+        """Log one command error with its Discord context."""
+        logger.error(
+            "Command error: command=%s user=%s guild=%s error=%s",
+            context.command.qualified_name
+            if context.command
+            else context.invoked_with or "unknown",
+            context.author.id,
+            context.guild.id if context.guild else "dm",
+            error,
+        )
 
     @staticmethod
     def _unwrap_command_error(error: commands.CommandError) -> Exception:
