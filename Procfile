@@ -1,0 +1,1 @@
+worker: PYTHONPATH=src python -m owlin_bot.main
