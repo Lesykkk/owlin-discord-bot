@@ -19,15 +19,16 @@ class AppCommandErrorHandler(ErrorSurfaceHandler):
     ) -> None:
         """Handle an error raised while processing a slash command or autocomplete."""
         original = self._unwrap(error)
+        message, expected = self._classify(original)
         self._manager.report(
             surface="app_command",
             error=original,
+            expected=expected,
             command=interaction.command.qualified_name if interaction.command else "unknown",
             user=interaction.user.id,
             guild=interaction.guild_id or "dm",
         )
 
-        message = self._to_message(original)
         await respond_to_interaction(interaction, message)
 
     def _known_error_message(self, error: BaseException) -> str | None:

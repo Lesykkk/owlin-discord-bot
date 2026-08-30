@@ -28,6 +28,7 @@ class SafeView(discord.ui.View):
         self._manager.report(
             surface="view",
             error=error,
+            expected=self._manager.is_expected(error),
             item=item.__class__.__name__,
             user=interaction.user.id,
         )
@@ -45,5 +46,10 @@ class SafeModal(discord.ui.Modal):
         self, interaction: discord.Interaction, error: Exception, /
     ) -> None:
         """Log the error and tell the user something went wrong."""
-        self._manager.report(surface="modal", error=error, user=interaction.user.id)
+        self._manager.report(
+            surface="modal",
+            error=error,
+            expected=self._manager.is_expected(error),
+            user=interaction.user.id,
+        )
         await respond_to_interaction(interaction, self._manager.to_user_message(error))

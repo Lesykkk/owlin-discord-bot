@@ -27,15 +27,16 @@ class CommandErrorHandler(ErrorSurfaceHandler):
             return
 
         original = self._unwrap(error)
+        message, expected = self._classify(original)
         self._manager.report(
             surface="command",
             error=original,
+            expected=expected,
             command=context.command.qualified_name if context.command else context.invoked_with,
             user=context.author.id,
             guild=context.guild.id if context.guild else "dm",
         )
 
-        message = self._to_message(original)
         await self._discord_client.send_message(context.channel.id, message)
 
     def _known_error_message(self, error: BaseException) -> str | None:

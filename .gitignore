@@ -222,3 +222,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Local AI-agent context (not for the repo's human-facing docs)
+AGENTS.md

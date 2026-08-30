@@ -47,7 +47,9 @@ def _configure_raw_event_error_handler(bot: commands.Bot, manager: ErrorReportin
 
     async def on_error(event_name: str, /, *_args: Any, **_kwargs: Any) -> None:
         error = sys.exc_info()[1] or RuntimeError("unknown event error")
-        manager.report(surface=f"event:{event_name}", error=error)
+        # A raw event listener has no "known, already-friendly" exceptions of
+        # its own, so anything reaching here is always worth a full traceback.
+        manager.report(surface=f"event:{event_name}", error=error, expected=False)
 
     bot.event(on_error)
 

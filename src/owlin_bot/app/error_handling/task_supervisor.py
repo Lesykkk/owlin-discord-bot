@@ -28,7 +28,9 @@ def guarded(
             try:
                 await body()
             except Exception as error:  # pylint: disable=broad-exception-caught
-                manager.report(surface=f"task:{name}", error=error)
+                # A task body has no "known, already-friendly" exceptions of its
+                # own, so anything reaching here is always worth a full traceback.
+                manager.report(surface=f"task:{name}", error=error, expected=False)
 
         return wrapper
 

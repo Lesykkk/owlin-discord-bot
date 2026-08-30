@@ -30,3 +30,4 @@ async def test_failing_body_is_reported_instead_of_raised(caplog):
 
     assert "task:ping error:" in caplog.text
     assert "error=boom" in caplog.text
+    assert "Traceback" in caplog.text
