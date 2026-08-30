@@ -5,6 +5,7 @@ from __future__ import annotations
 import discord
 from discord.ext import commands
 
+from owlin_bot.app.context import bind_flow_id
 from owlin_bot.modules.moderation.models import MessageEvent
 from owlin_bot.modules.moderation.service import ModerationService
 
@@ -17,6 +18,7 @@ class ModerationEvents:
 
     async def on_message(self, message: discord.Message) -> None:
         """Pass a received Discord message to moderation."""
+        bind_flow_id(str(message.id))
         member = message.author if isinstance(message.author, discord.Member) else None
         guild = message.guild
         event = MessageEvent(
